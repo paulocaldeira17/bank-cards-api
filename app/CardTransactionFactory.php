@@ -23,7 +23,8 @@ class CardTransactionFactory extends Base
 
         $transaction->id = Uuid::generate();
         $transaction->amount = $amount;
-        $transaction->type = $amount >= 0 ? CardTransaction::TYPE_DEPOSIT : CardTransaction::TYPE_WITHDRAW;
+        $transaction->type = $amount >= 0 ?
+            CardTransaction::TYPE_DEPOSIT : CardTransaction::TYPE_WITHDRAW;
 
         return $transaction;
     }

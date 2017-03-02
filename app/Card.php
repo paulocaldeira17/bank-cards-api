@@ -100,6 +100,19 @@ class Card extends Base
     }
 
     /**
+     * Returns card by id with balance
+     * @param $id Card id
+     * @return mixed Card
+     */
+    public static function getByIdWithBalance($id)
+    {
+        return self::getById($id)->get()->map(function (Card $card) {
+            $card->balance = $card->transactions->sum('amount');
+            return $card;
+        });
+    }
+
+    /**
      * Returns card transactions
      */
     public function transactions()

@@ -17,8 +17,10 @@ class CardTransaction extends Base
     /**
      * Transactions types
      */
-    const TYPE_DEPOSIT = "deposit";
+    const TYPE_DEPOSIT  = "deposit";
     const TYPE_WITHDRAW = "withdraw";
+    const TYPE_REFUND   = "refund";
+    const TYPE_BLOCKED  = "blocked";
 
     /**
      * Table name

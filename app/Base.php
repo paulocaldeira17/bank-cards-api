@@ -72,7 +72,7 @@ class Base extends Model
             return false;
         }
 
-        return self::find($id);
+        return self::where('id', $id);
     }
 
     /**

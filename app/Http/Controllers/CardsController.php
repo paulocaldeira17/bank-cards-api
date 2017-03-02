@@ -137,7 +137,7 @@ class CardsController extends Controller
             'data' => []
         );
 
-        if ($card = Card::getById($id)) {
+        if ($card = Card::getByIdWithBalance($id)) {
             $response['success'] = true;
             $response['data'] = $card;
         }
