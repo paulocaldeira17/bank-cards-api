@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Base Model
+ * @property string deleted_at Deleted at
  * @package App
  */
 class Base extends Model
@@ -36,7 +37,7 @@ class Base extends Model
      *
      * @var bool
      */
-    public $hidden = [self::DELETED_AT];
+    protected $hidden = [self::DELETED_AT];
 
     /**
      * The "booting" method of the model.
@@ -48,17 +49,6 @@ class Base extends Model
         parent::boot();
 
         static::addGlobalScope(new ActiveScope);
-    }
-
-    /**
-     * Returns all resources
-     * @param int $limit Limit
-     * @param int $skip Skip
-     * @return Collection
-     */
-    public static function getAll($limit = 10, $skip = 0) {
-        return self::limit($limit)
-            ->offset($skip);
     }
 
     /**
@@ -76,18 +66,11 @@ class Base extends Model
     }
 
     /**
-     * Deletes resource by id
-     * @param $id Resource id
+     * Deletes resource
      * @return bool Deleted
      */
-    public static function deleteById($id) {
-        $resource = self::getById($id);
-
-        if (empty($resource)) {
-            return false;
-        }
-
-        $resource->deleted_at = date('Y-m-d H:i:s');
-        return $resource->save();
+    public function delete() {
+        $this->deleted_at = date('Y-m-d H:i:s');
+        return $this->save();
     }
 }

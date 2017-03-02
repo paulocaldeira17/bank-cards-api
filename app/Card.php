@@ -10,6 +10,7 @@ use Webpatser\Uuid\Uuid;
  * @property string accountName
  * @property string iban
  * @property string bic
+ * @property string user_id
  * @property CardTransaction[] transactions
  *
  * @package App
@@ -49,12 +50,9 @@ class Card extends Base
         $card->accountName = $data['accountName'];
         $card->iban = $data['iban'];
         $card->bic = $data['bic'];
+        $card->user_id = $data['user_id'];
 
-        if ($card->save()) {
-            return $card;
-        }
-
-        return false;
+        return $card;
     }
 
     /**
@@ -64,7 +62,7 @@ class Card extends Base
      * @return mixed
      */
     public static function updateById($id, $data = []) {
-        $card = self::getById($id);
+        $card = self::getById($id)->first();
 
         if (empty($card)) {
             return false;
@@ -83,33 +81,6 @@ class Card extends Base
         }
 
         return $card->save();
-    }
-
-    /**
-     * Returns cards with balance
-     * @param int $limit Limit
-     * @param int $skip Skip
-     * @return mixed Cards with balance
-     */
-    public static function getAllWithBalance($limit = 10, $skip = 0)
-    {
-        return self::getAll($limit, $skip)->get()->map(function (Card $card) {
-            $card->balance = $card->transactions->sum('amount');
-            return $card;
-        });
-    }
-
-    /**
-     * Returns card by id with balance
-     * @param $id Card id
-     * @return mixed Card
-     */
-    public static function getByIdWithBalance($id)
-    {
-        return self::getById($id)->get()->map(function (Card $card) {
-            $card->balance = $card->transactions->sum('amount');
-            return $card;
-        });
     }
 
     /**

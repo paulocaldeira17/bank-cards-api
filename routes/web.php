@@ -13,12 +13,24 @@
 
 $app->group(['prefix' => 'api/v1'], function () use ($app) {
     /**
-     * Cards Routes
+     * Users Routes
      */
-    $app->get('/cards', 'CardsController@index');
-    $app->post('/cards', 'CardsController@store');
-    $app->get('/cards/{id}', 'CardsController@show');
-    $app->put('/cards/edit/{id}', 'CardsController@update');
-    $app->patch('/cards/edit/{id}', 'CardsController@update');
-    $app->delete('/cards/{id}', 'CardsController@destroy');
+    $app->get('/users', 'UsersController@index');
+    $app->post('/users', 'UsersController@store');
+    $app->get('/users/{id}', 'UsersController@show');
+    $app->get('/users/{id}/token', 'UsersController@generateToken');
+
+    $app->group(['middleware' => 'auth'], function () use ($app) {
+        /**
+         * Cards Routes
+         */
+        $app->get('/cards', 'CardsController@index');
+        $app->post('/cards', 'CardsController@store');
+        $app->get('/cards/{id}', 'CardsController@show');
+        $app->put('/cards/edit/{id}', 'CardsController@update');
+        $app->patch('/cards/edit/{id}', 'CardsController@update');
+        $app->delete('/cards/{id}', 'CardsController@destroy');
+        $app->get('/cards/{id}/balance', 'CardsController@balance');
+        $app->get('/cards/{id}/transactions', 'CardsController@transactions');
+    });
 });

@@ -1,11 +1,11 @@
 <?php
 
-use App\Card;
+use App\User;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateCardsTable extends Migration
+class CreateUsersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,17 +14,12 @@ class CreateCardsTable extends Migration
      */
     public function up()
     {
-        Schema::create('cards', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             $table->uuid('id');
             $table->primary('id');
-            $table->string('accountName');
-            $table->string('iban', Card::IBAN_LENGTH)->unique();
-            $table->string('bic',  Card::BIC_LENGTH)->unique();
-            $table->string('currencyCode', 3)->default(Card::DEFAULT_CURRENCY_CODE);
-
-            $table->uuid('user_id');
-            $table->foreign('user_id')->references('id')->on('users');
-
+            $table->string('name', User::NAME_LENGTH);
+            $table->string('email', User::EMAIL_LENGTH);
+            $table->text('api_token')->nullable();
             $table->timestamps();
             $table->timestamp('deleted_at')->nullable();
         });
@@ -37,6 +32,6 @@ class CreateCardsTable extends Migration
      */
     public function down()
     {
-        Schema::drop('cards');
+        Schema::drop('users');
     }
 }

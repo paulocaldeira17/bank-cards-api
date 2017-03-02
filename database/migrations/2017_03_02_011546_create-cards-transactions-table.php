@@ -17,10 +17,12 @@ class CreateCardsTransactionsTable extends Migration
         Schema::create('card_transactions', function (Blueprint $table) {
             $table->uuid('id');
             $table->primary('id');
-
             $table->decimal('amount', 10, 2);
+
+            // Card
             $table->uuid('card_id');
             $table->foreign('card_id')->references('id')->on('cards');
+
             $table->enum('type', [
                 CardTransaction::TYPE_DEPOSIT,
                 CardTransaction::TYPE_WITHDRAW,

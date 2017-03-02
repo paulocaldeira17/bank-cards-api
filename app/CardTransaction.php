@@ -1,7 +1,6 @@
 <?php
 
 namespace App;
-use Webpatser\Uuid\Uuid;
 
 /**
  * Class Card Transaction Model

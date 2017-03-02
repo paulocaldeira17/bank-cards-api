@@ -16,7 +16,7 @@ class CardsController extends Controller
     /**
      * Constants
      */
-    const MORE_ENDPOINT = '/cards/';
+    const MORE_ENDPOINT = '/api/v1/cards/';
 
     /**
      * @api {get} /cards Get all cards
@@ -30,10 +30,13 @@ class CardsController extends Controller
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {String} data Details
      * @apiSuccess {String} data.items Cards
+     *
+     * @param Request $request Request
+     * @return string Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $cards = Card::getAllWithBalance();
+        $cards = $request->user()->getCards();
 
         $response = [
             'success' => true,
@@ -46,7 +49,7 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {post} /cards Create Card
+     * @api {post} /cards Create card
      * @apiName StoreCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
@@ -96,11 +99,12 @@ class CardsController extends Controller
             'iban' => $request->get('iban'),
             'bic' => $request->get('bic'),
             'currencyCode' => $request->get('currencyCode', Card::DEFAULT_CURRENCY_CODE),
+            'user_id' => $request->user()->id
         ];
 
         // Creates card
-        if ($card = Card::create($data)) {
-
+        $card = Card::create($data);
+        if ($card->save()) {
             // Deposit if balance is passed
             if ($balance = $request->get('balance')) {
                 $transaction = CardTransactionFactory::createTransaction($balance);
@@ -109,7 +113,7 @@ class CardsController extends Controller
 
             $response['success'] = true;
 
-            $response['data']['id'] = $card->id;
+            $response['data']['id'] = (string) $card->id;
             $response['data']['more'] = self::MORE_ENDPOINT . $card->id;
         }
 
@@ -117,7 +121,7 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {get} /cards/:id Get Card
+     * @api {get} /cards/:id Get card
      * @apiName ShowCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
@@ -127,17 +131,18 @@ class CardsController extends Controller
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {String} data Card details
      *
+     * @param Request $request Request
      * @param integer $id Card id
      * @return mixed Card
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $response = array(
             'success' => false,
             'data' => []
         );
 
-        if ($card = Card::getByIdWithBalance($id)) {
+        if ($card = $request->user()->getCard($id)) {
             $response['success'] = true;
             $response['data'] = $card;
         }
@@ -146,7 +151,7 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {put} /cards/:id Edit Card
+     * @api {put} /cards/:id Edit card
      * @apiName UpdateCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
@@ -206,7 +211,7 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {delete} /cards/:id Remove Card
+     * @api {delete} /cards/:id Remove card
      * @apiName DeleteCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
@@ -215,17 +220,80 @@ class CardsController extends Controller
      *
      * @apiSuccess {Boolean} success Deleted
      *
+     * @param Request $request Request
      * @param integer $id Card id
      * @return mixed Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $response = [
             'success' => false
         ];
 
-        if (Card::deleteById($id)) {
+        if ($card = $request->user()->getCard($id)) {
+            $response['success'] = $card->delete();
+        }
+
+        return $response;
+    }
+
+    /**
+     * @api {get} /cards/:id/balance Card balance
+     * @apiName BalanceCard
+     * @apiGroup Cards
+     * @apiVersion 0.1.0
+     *
+     * @apiParam {Number} id Card unique id
+     *
+     * @apiSuccess {Boolean} success Deleted
+     * @apiSuccess {Boolean} data.authorizedBalance Authorized Balance
+     * @apiSuccess {Boolean} data.balance Deleted Balance
+     *
+     * @param Request $request Request
+     * @param integer $id Card id
+     * @return mixed Response
+     */
+    public function balance(Request $request, $id)
+    {
+        $response = [
+            'success' => false,
+            'data' => []
+        ];
+
+        if ($card = $request->user()->getCard($id)) {
             $response['success'] = true;
+            $response['data']['authorizedBalance'] = $card->authorizedBalance;
+            $response['data']['balance'] = $card->balance;
+        }
+
+        return $response;
+    }
+
+    /**
+     * @api {get} /cards/:id/transactions Card transactions
+     * @apiName DeleteCard
+     * @apiGroup Cards
+     * @apiVersion 0.1.0
+     *
+     * @apiParam {Number} id Card unique id
+     *
+     * @apiSuccess {Boolean} success Deleted
+     * @apiSuccess {Boolean} data.items Transactions
+     *
+     * @param Request $request Request
+     * @param integer $id Card id
+     * @return mixed Response
+     */
+    public function transactions(Request $request, $id)
+    {
+        $response = [
+            'success' => false,
+            'data' => []
+        ];
+
+        if ($transactions = $request->user()->getCard($id)->transactions) {
+            $response['success'] = true;
+            $response['data']['items'] = $transactions;
         }
 
         return $response;
