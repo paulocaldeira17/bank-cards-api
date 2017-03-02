@@ -18,6 +18,12 @@ class UsersController extends Controller
     const MORE_ENDPOINT = '/api/v1/users/';
 
     /**
+     * Errors
+     */
+    const UNABLE_TO_CREATE_USER = 'UnableCreateUser';
+    const USER_NOT_FOUND = 'UserNotFound';
+
+    /**
      * @api {get} /users Get users
      * @apiName GetUsers
      * @apiGroup Users
@@ -33,15 +39,7 @@ class UsersController extends Controller
     public function index()
     {
         $users = User::all();
-
-        $response = [
-            'success' => true,
-            'data' => [
-                'items' => $users
-            ]
-        ];
-
-        return $response;
+        return $this->response->pagination($users);
     }
 
     /**
@@ -63,14 +61,6 @@ class UsersController extends Controller
      */
     public function store(Request $request)
     {
-        $response = [
-            'success' => false,
-            'data' => [
-                'id' => null,
-                'more' => null
-            ]
-        ];
-
         // validate
         // read more on validation at http://laravel.com/docs/validation
         $rules = array(
@@ -82,7 +72,8 @@ class UsersController extends Controller
         try {
             $this->validate($request, $rules);
         } catch (ValidationException $e) {
-            return $response;
+            $errors = $e->getResponse()->getData();
+            return $this->response->error(self::UNABLE_TO_CREATE_USER, $errors);
         }
 
         // store
@@ -94,13 +85,15 @@ class UsersController extends Controller
         // Creates card
         $user = User::create($data);
         if ($user->save()) {
-            $response['success'] = true;
+            $response = [
+                'id' => (string) $user->id,
+                'more' => self::MORE_ENDPOINT . $user->id,
+            ];
 
-            $response['data']['id'] = $user->id;
-            $response['data']['more'] = self::MORE_ENDPOINT . $user->id;
+            return $this->response->success($response);
         }
 
-        return $response;
+        return $this->response->error(self::UNABLE_TO_CREATE_USER);
     }
 
     /**
@@ -119,17 +112,11 @@ class UsersController extends Controller
      */
     public function show($id)
     {
-        $response = array(
-            'success' => false,
-            'data' => []
-        );
-
         if ($user = User::getById($id)) {
-            $response['success'] = true;
-            $response['data'] = $user;
+            return $this->response->success($user);
         }
 
-        return $response;
+        return $this->response->error(self::USER_NOT_FOUND);
     }
 
     /**
@@ -149,22 +136,17 @@ class UsersController extends Controller
      */
     public function generateToken($id)
     {
-        $response = array(
-            'success' => false,
-            'data' => []
-        );
-
-        /**
-         * @var User $user
-         */
         if ($user = User::getById($id)) {
             // regenerates token
             $user->regenerateToken();
 
-            $response['success'] = true;
-            $response['data']['token'] = (string) $user->api_token;
+            $response = [
+                'token' => (string) $user->api_token
+            ];
+
+            return $this->response->success($response);
         }
 
-        return $response;
+        return $this->response->error(self::USER_NOT_FOUND);
     }
 }

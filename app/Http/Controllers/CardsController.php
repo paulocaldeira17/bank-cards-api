@@ -19,13 +19,16 @@ class CardsController extends Controller
     const MORE_ENDPOINT = '/api/v1/cards/';
 
     /**
+     * Errors
+     */
+    const UNABLE_TO_CREATE_CARD = 'UnableCreateCard';
+    const CARD_NOT_FOUND = 'CardNotFound';
+
+    /**
      * @api {get} /cards Get all cards
      * @apiName GetCards
      * @apiGroup Cards
      * @apiVersion 0.1.0
-     *
-     * @apiParam {Integer} [limit=10] Limit
-     * @apiParam {Integer} [skip=0] Skip (offset)
      *
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {String} data Details
@@ -37,15 +40,7 @@ class CardsController extends Controller
     public function index(Request $request)
     {
         $cards = $request->user()->getCards();
-
-        $response = [
-            'success' => true,
-            'data' => [
-                'items' => $cards,
-            ]
-        ];
-
-        return $response;
+        return $this->response->pagination($cards);
     }
 
     /**
@@ -70,14 +65,6 @@ class CardsController extends Controller
      */
     public function store(Request $request)
     {
-        $response = [
-            'success' => false,
-            'data' => [
-                'id' => null,
-                'more' => null
-            ]
-        ];
-
         // validate
         // read more on validation at http://laravel.com/docs/validation
         $rules = array(
@@ -90,7 +77,8 @@ class CardsController extends Controller
         try {
             $this->validate($request, $rules);
         } catch (ValidationException $e) {
-            return $response;
+            $errors = $e->getResponse()->getData();
+            return $this->response->error(self::UNABLE_TO_CREATE_CARD, $errors);
         }
 
         // store
@@ -111,13 +99,15 @@ class CardsController extends Controller
                 $card->makeTransaction($transaction);
             }
 
-            $response['success'] = true;
+            $response = [
+                'id' => (string) $card->id,
+                'more' => self::MORE_ENDPOINT . $card->id
+            ];
 
-            $response['data']['id'] = (string) $card->id;
-            $response['data']['more'] = self::MORE_ENDPOINT . $card->id;
+            return $this->response->success($response);
         }
 
-        return $response;
+        return $this->response->error(self::UNABLE_TO_CREATE_CARD);
     }
 
     /**
@@ -137,17 +127,11 @@ class CardsController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $response = array(
-            'success' => false,
-            'data' => []
-        );
-
         if ($card = $request->user()->getCard($id)) {
-            $response['success'] = true;
-            $response['data'] = $card;
+            return $this->response->success($card);
         }
 
-        return $response;
+        return $this->response->error(self::CARD_NOT_FOUND);
     }
 
     /**
@@ -175,14 +159,6 @@ class CardsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $response = [
-            'success' => false,
-            'data' => [
-                'id' => $id,
-                'more' => self::MORE_ENDPOINT . $id
-            ]
-        ];
-
         // validate
         // read more on validation at http://laravel.com/docs/validation
         $rules = array(
@@ -194,7 +170,8 @@ class CardsController extends Controller
         try {
             $this->validate($request, $rules);
         } catch (ValidationException $e) {
-            return $response;
+            $errors = $e->getResponse()->getData();
+            return $this->response->error(self::UNABLE_TO_CREATE_CARD, $errors);
         }
 
         // store
@@ -205,9 +182,16 @@ class CardsController extends Controller
             'currencyCode' => $request->get('currencyCode'),
         ];
 
-        $response['success'] = Card::updateById($id, $data);
+        if (Card::updateById($id, $data)) {
+            $response = [
+                'id' => (string) $card->id,
+                'more' => self::MORE_ENDPOINT . $card->id
+            ];
 
-        return $response;
+            return $this->response->success($response);
+        }
+
+        return $this->response->error(self::CARD_NOT_FOUND);
     }
 
     /**
@@ -226,15 +210,14 @@ class CardsController extends Controller
      */
     public function destroy(Request $request, $id)
     {
-        $response = [
-            'success' => false
-        ];
-
         if ($card = $request->user()->getCard($id)) {
-            $response['success'] = $card->delete();
+
+            if ($card->delete()) {
+                return $this->response->success();
+            }
         }
 
-        return $response;
+        return $this->response->error(self::CARD_NOT_FOUND);
     }
 
     /**
@@ -255,18 +238,16 @@ class CardsController extends Controller
      */
     public function balance(Request $request, $id)
     {
-        $response = [
-            'success' => false,
-            'data' => []
-        ];
-
         if ($card = $request->user()->getCard($id)) {
-            $response['success'] = true;
-            $response['data']['authorizedBalance'] = $card->authorizedBalance;
-            $response['data']['balance'] = $card->balance;
+            $response = [
+                'authorizedBalance' => $card->authorizedBalance,
+                'balance' => $card->balance,
+            ];
+
+            return $this->response->success($response);
         }
 
-        return $response;
+        return $this->response->error(self::CARD_NOT_FOUND);
     }
 
     /**
@@ -286,16 +267,7 @@ class CardsController extends Controller
      */
     public function transactions(Request $request, $id)
     {
-        $response = [
-            'success' => false,
-            'data' => []
-        ];
-
-        if ($transactions = $request->user()->getCard($id)->transactions) {
-            $response['success'] = true;
-            $response['data']['items'] = $transactions;
-        }
-
-        return $response;
+        $transactions = $request->user()->getCard($id)->transactions;
+        return $this->response->pagination($transactions);
     }
 }
