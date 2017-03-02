@@ -25,6 +25,16 @@ $factory->define(App\Card::class, function (Faker\Generator $faker) {
         'accountName' => $bankDetails["name"],
         'iban' => $faker->bankAccountNumber,
         'bic' => $faker->swiftBicNumber,
-        'balance' => $faker->randomFloat(2, 10, 100),
+    ];
+});
+
+$factory->define(App\CardTransaction::class, function (Faker\Generator $faker) {
+    $firstCard = \App\Card::getAll()->first();
+
+    return [
+        'id' => $faker->uuid,
+        'amount' => $faker->randomFloat(2, 1, 20),
+        'card_id' => $firstCard->id,
+        'type' => $faker->randomElement([\App\CardTransaction::TYPE_DEPOSIT])
     ];
 });

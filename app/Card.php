@@ -1,6 +1,7 @@
 <?php
 
 namespace App;
+use App\CardTransaction;
 use Webpatser\Uuid\Uuid;
 
 /**
@@ -9,7 +10,7 @@ use Webpatser\Uuid\Uuid;
  * @property string accountName
  * @property string iban
  * @property string bic
- * @property double balance
+ * @property CardTransaction[] transactions
  *
  * @package App
  */
@@ -39,7 +40,7 @@ class Card extends Base
     /**
      * Create card
      * @param array $data Card data
-     * @return mixed
+     * @return Card New card
      */
     public static function create($data = []) {
         $card = new Card();
@@ -48,10 +49,9 @@ class Card extends Base
         $card->accountName = $data['accountName'];
         $card->iban = $data['iban'];
         $card->bic = $data['bic'];
-        $card->balance = $data['balance'];
 
         if ($card->save()) {
-            return $card->id;
+            return $card;
         }
 
         return false;
@@ -83,5 +83,41 @@ class Card extends Base
         }
 
         return $card->save();
+    }
+
+    /**
+     * Returns cards with balance
+     * @param int $limit Limit
+     * @param int $skip Skip
+     * @return mixed Cards with balance
+     */
+    public static function getAllWithBalance($limit = 10, $skip = 0)
+    {
+        return self::getAll($limit, $skip)->get()->map(function (Card $card) {
+            $card->balance = $card->transactions->sum('amount');
+            return $card;
+        });
+    }
+
+    /**
+     * Returns card transactions
+     */
+    public function transactions()
+    {
+        return $this->hasMany('App\CardTransaction');
+    }
+
+    /**
+     * Makes transaction using card
+     * @param CardTransaction $transaction Transaction
+     * @return bool Success
+     */
+    public function makeTransaction(CardTransaction $transaction) {
+        if (empty($transaction)) {
+            return false;
+        }
+
+        $transaction->card_id = $this->id;
+        $transaction->save();
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Card;
+use App\CardTransactionFactory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -32,7 +33,7 @@ class CardsController extends Controller
      */
     public function index()
     {
-        $cards = Card::getAll();
+        $cards = Card::getAllWithBalance();
 
         $response = [
             'success' => true,
@@ -94,15 +95,22 @@ class CardsController extends Controller
             'accountName' => $request->get('accountName'),
             'iban' => $request->get('iban'),
             'bic' => $request->get('bic'),
-            'balance' => $request->get('balance'),
             'currencyCode' => $request->get('currencyCode', Card::DEFAULT_CURRENCY_CODE),
         ];
 
-        if ($cardId = (string) Card::create($data)) {
+        // Creates card
+        if ($card = Card::create($data)) {
+
+            // Deposit if balance is passed
+            if ($balance = $request->get('balance')) {
+                $transaction = CardTransactionFactory::createTransaction($balance);
+                $card->makeTransaction($transaction);
+            }
+
             $response['success'] = true;
 
-            $response['data']['id'] = $cardId;
-            $response['data']['more'] = self::MORE_ENDPOINT . $cardId;
+            $response['data']['id'] = $card->id;
+            $response['data']['more'] = self::MORE_ENDPOINT . $card->id;
         }
 
         return $response;

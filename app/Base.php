@@ -58,8 +58,7 @@ class Base extends Model
      */
     public static function getAll($limit = 10, $skip = 0) {
         return self::limit($limit)
-            ->offset($skip)
-            ->get();
+            ->offset($skip);
     }
 
     /**
