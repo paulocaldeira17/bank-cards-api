@@ -1,0 +1,24 @@
+{
+  "name": "curve-api",
+  "version": "0.1.0",
+  "description": "Generate multiple prepaid cards and make transactions with merchants",
+  "main": "public/index.php",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "prepaid",
+    "cards",
+    "transactions",
+    "merchants"
+  ],
+  "author": "Paulo Caldeira <paulocaldeira17@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-apidoc": "^0.2.5"
+  }
+}

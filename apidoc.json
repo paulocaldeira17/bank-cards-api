@@ -1,0 +1,6 @@
+{
+  "name": "CurveApi",
+  "version": "0.1.0",
+  "description": "Generate multiple prepaid cards and make transactions with merchants",
+  "url": "documentation/v1/"
+}
