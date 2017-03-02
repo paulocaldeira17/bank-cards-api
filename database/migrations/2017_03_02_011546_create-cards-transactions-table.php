@@ -21,7 +21,12 @@ class CreateCardsTransactionsTable extends Migration
             $table->decimal('amount', 10, 2);
             $table->uuid('card_id');
             $table->foreign('card_id')->references('id')->on('cards');
-            $table->enum('type', [CardTransaction::TYPE_DEPOSIT, CardTransaction::TYPE_WITHDRAW]);
+            $table->enum('type', [
+                CardTransaction::TYPE_DEPOSIT,
+                CardTransaction::TYPE_WITHDRAW,
+                CardTransaction::TYPE_BLOCKED,
+                CardTransaction::TYPE_REFUND
+            ]);
 
             $table->timestamps();
             $table->timestamp('deleted_at')->nullable();
