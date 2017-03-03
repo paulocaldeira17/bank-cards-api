@@ -11,6 +11,10 @@
 |
 */
 
+$app->get('/', function () use ($app) {
+    return redirect('documentation/v1\/');
+});
+
 $app->group(['prefix' => 'api/v1'], function () use ($app) {
     /**
      * Users Routes
