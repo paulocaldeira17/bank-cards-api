@@ -27,13 +27,9 @@
         ]
     },
     "scripts": {
-        "post-root-package-install": [
-            "php -r \"copy('.env.example', '.env');\""
-        ],
         "post-install-cmd": [
             "touch database/database.sqlite",
-            "npm install",
-            "gulp"
+            "php -S localhost:8000 -t public"
         ]
     },
     "minimum-stability": "dev",
