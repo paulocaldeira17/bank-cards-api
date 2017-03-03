@@ -9,7 +9,8 @@
         "ext-memcached": "*",
         "laravel/lumen-framework": "5.4.*",
         "vlucas/phpdotenv": "~2.2",
-        "webpatser/laravel-uuid": "^2.0"
+        "webpatser/laravel-uuid": "^2.0",
+        "ext-pdo_sqlite": "*"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
