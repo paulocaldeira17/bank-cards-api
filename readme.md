@@ -18,8 +18,9 @@ After install requirements run these commands on your console.
 2. Install composer dependencies using `composer install`
 3. Install NPM dependencies using `npm install`.
 4. Generate [API Documentation](#API-Documentation) using `gulp` command.
-5. Migrate database using `php artisan migrate`. Please certify that `database/database.sqlite` database is created.
-6. Run `php -S localhost:8000 -t public` to start your server.
+5. Set your `APP_KEY` inside `.env` file.
+6. Migrate database using `php artisan migrate`. Please certify that `database/database.sqlite` database is created.
+7. Run `php -S localhost:8000 -t public` to start your server.
 
 ### API Documentation
 
