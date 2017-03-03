@@ -33,7 +33,8 @@
             "php -r \"copy('.env.example', '.env');\""
         ],
         "post-install-cmd": [
-            "touch \"database/database.sqlite\""
+            "touch \"database/database.sqlite\"",
+            "php artisan migrate"
         ]
     },
     "minimum-stability": "dev",
