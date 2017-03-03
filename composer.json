@@ -31,7 +31,7 @@
             "php -r \"copy('.env.example', '.env');\""
         ],
         "post-install-cmd": [
-            "php -r \"touch database/database.sqlite\"",
+            "touch database/database.sqlite",
             "npm install",
             "gulp"
         ]
