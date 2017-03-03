@@ -2,6 +2,10 @@
 
 An API that allows you to create multiple cards and transactions using merchants authorization requests.
 
+You can use Heroku deployed version [http://bank-cards-api.herokuapp.com/](http://bank-cards-api.herokuapp.com/). 
+
+**Note:** If you use Heroku please remember that your data may not be persistent.
+
 ### Requirements
 
 * PHP >=5.6.4
