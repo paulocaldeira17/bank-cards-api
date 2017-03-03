@@ -2,7 +2,6 @@
 /.idea
 Homestead.json
 Homestead.yaml
-.env
 
 ## SQLite Database
 database/database.sqlite
