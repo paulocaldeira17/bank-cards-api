@@ -33,8 +33,12 @@ $app->group(['prefix' => 'api/v1'], function () use ($app) {
         $app->get('/cards/{id}/balance', 'CardsController@balance');
         $app->get('/cards/{id}/transactions', 'CardsController@transactions');
         $app->post('/cards/{id}/deposit', 'CardsController@deposit');
+
+        /**
+         * Merchants Routes
+         */
         $app->post('/cards/{id}/authorization', 'CardsController@authorizationRequest');
-        $app->post('/cards/{id}/capture', 'CardsController@capture');
-        $app->post('/cards/{id}/refund', 'CardsController@refund');
+        $app->post('/cards/{id}/capture/{authorization}', 'CardsController@capture');
+        $app->post('/cards/{id}/refund/{authorization}', 'CardsController@refund');
     });
 });

@@ -99,7 +99,7 @@ class UsersController extends Controller
      * @apiGroup Users
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id User unique id
+     * @apiParam (Path) {String} id User unique id
      *
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {Object} data User details
@@ -122,7 +122,7 @@ class UsersController extends Controller
      * @apiGroup Users
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id User unique id
+     * @apiParam (Path) {String} id User unique id
      *
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {Object} data Data

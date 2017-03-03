@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\BlockedCardTransaction;
 use App\Card;
 use App\CardTransaction;
 use App\CardTransactionFactory;
+use App\MerchantAuthorization;
+use App\MerchantCapturedTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -26,12 +29,17 @@ class CardsController extends Controller
     const CARD_NOT_FOUND = 'CardNotFound';
     const UNAUTHORIZED = 'Unauthorized';
     const UNABLE_TO_FINISH_TRANSACTION = 'UnableFinishToTransaction';
+    const AUTHORIZATION_NOT_FOUND = 'AuthorizationNotFound';
+    const UNABLE_TO_CAPTURE_AMOUNT = 'UnableToCaptureAmount';
+    const UNABLE_TO_AUTHORIZE_REQUEST = 'UnableToAuthorizeRequest';
 
     /**
-     * @api {get} /cards Get all cards
+     * @api {get} /cards?api_token=[user-token] Get all cards
      * @apiName GetCards
      * @apiGroup Cards
      * @apiVersion 0.1.0
+     * 
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {Object} data Data
@@ -47,10 +55,12 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {post} /cards Create card
+     * @api {post} /cards?api_token=[user-token] Create card
      * @apiName StoreCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
+     *
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiParam (Body) {String} accountName Account name
      * @apiParam (Body) {String} iban IBAN
@@ -115,12 +125,14 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {get} /cards/:id Get card
+     * @api {get} /cards/:id?api_token=[user-token] Get card
      * @apiName ShowCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id Card unique id
+     * @apiParam (Path) {String} id Card unique id
+     *
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {String} data Card details
@@ -139,12 +151,14 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {put} /cards/:id Edit card
+     * @api {put} /cards/:id?api_token=[user-token] Edit card
      * @apiName UpdateCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id Card unique id
+     * @apiParam (Path) {String} id Card unique id
+     *
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiParam (Body) {String} [accountName] Account name
      * @apiParam (Body) {String} [iban] IBAN
@@ -199,12 +213,14 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {delete} /cards/:id Remove card
+     * @api {delete} /cards/:id?api_token=[user-token] Remove card
      * @apiName DeleteCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id Card unique id
+     * @apiParam (Path) {String} id Card unique id
+     *
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiSuccess {Boolean} success Deleted
      *
@@ -225,12 +241,14 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {get} /cards/:id/balance Card balance
+     * @api {get} /cards/:id/balance?api_token=[user-token] Card balance
      * @apiName BalanceCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id Card unique id
+     * @apiParam (Path) {String} id Card unique id
+     *
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiSuccess {Boolean} success Deleted
      * @apiSuccess {Object} data Data
@@ -256,12 +274,14 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {get} /cards/:id/transactions Card transactions
+     * @api {get} /cards/:id/transactions?api_token=[user-token] Card transactions
      * @apiName TransactionsCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id Card unique id
+     * @apiParam (Path) {String} id Card unique id
+     *
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {Object} data Data
@@ -284,17 +304,21 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {get} /cards/:id/deposit Load/Deposit
+     * @api {get} /cards/:id/deposit?api_token=[user-token] Load/Deposit
      * @apiName DepositCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id Card unique id
+     * @apiParam (Path) {String} id Card unique id
+     *
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiParam (Body) {Number} amount Load/Deposit amount
      * @apiParam (Body) {String} [description] Load description
      *
      * @apiSuccess {Boolean} success Success
+     * @apiSuccess {Object} data Data
+     * @apiSuccess {String} data.transaction_id Transaction id
      *
      * @param Request $request Request
      * @param integer $id Card id
@@ -303,8 +327,6 @@ class CardsController extends Controller
     public function deposit(Request $request, $id)
     {
         if ($card = $request->user()->getCard($id)) {
-            $amount = $request->get('amount');
-
             // validate
             // read more on validation at http://laravel.com/docs/validation
             $rules = array(
@@ -320,11 +342,16 @@ class CardsController extends Controller
                 return $this->response->error(self::UNABLE_TO_FINISH_TRANSACTION, $errors);
             }
 
+            $amount = $request->get('amount');
             $transaction = CardTransactionFactory::createTransactionByAmount($amount);
             $transaction->description = $request->get('description');
 
             if ($card->makeTransaction($transaction)) {
-                return $this->response->success();
+                $data = [
+                    'transaction_id' => (string) $transaction->id
+                ];
+
+                return $this->response->success($data);
             }
 
             return $this->response->error(self::UNABLE_TO_FINISH_TRANSACTION);
@@ -334,12 +361,14 @@ class CardsController extends Controller
     }
 
     /**
-     * @api {post} /cards/:id/authorization Merchant authorization
+     * @api {post} /cards/:id/authorization?api_token=[user-token] Merchant authorization
      * @apiName MerchantAuthorizationCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam (Path) {Number} id Card unique id
+     * @apiParam (Path) {String} id Card unique id
+     *
+     * @apiParam (QueryString) {String} api_token User token
      *
      * @apiParam (Body) {Number} amount Block amount
      * @apiParam (Body) {String} [description] Load description
@@ -355,8 +384,6 @@ class CardsController extends Controller
     public function authorizationRequest(Request $request, $id)
     {
         if ($card = $request->user()->getCard($id)) {
-            $amount = $request->get('amount');
-
             // validate
             // read more on validation at http://laravel.com/docs/validation
             $rules = array(
@@ -369,17 +396,88 @@ class CardsController extends Controller
                 $this->validate($request, $rules);
             } catch (ValidationException $e) {
                 $errors = $e->getResponse()->getData();
-                return $this->response->error(self::UNABLE_TO_FINISH_TRANSACTION, $errors);
+                return $this->response->error(self::UNABLE_TO_AUTHORIZE_REQUEST, $errors);
             }
 
+            $amount = $request->get('amount');
             $transaction = CardTransactionFactory::createTransaction($amount, CardTransaction::TYPE_BLOCKED);
             $transaction->description = $request->get('description');
 
             if ($card->makeTransaction($transaction)) {
-                return $this->response->success();
+                $data = [
+                    'authorization' => (string) $transaction->authorization_id
+                ];
+
+                return $this->response->success($data);
             }
 
-            return $this->response->error(self::UNABLE_TO_FINISH_TRANSACTION);
+            return $this->response->error(self::UNABLE_TO_AUTHORIZE_REQUEST);
+        }
+
+        return $this->response->error(self::CARD_NOT_FOUND);
+    }
+
+    /**
+     * @api {post} /cards/:id/capture/:authorization?api_token=[user-token] Merchant capture
+     * @apiName MerchantCaptureCard
+     * @apiGroup Cards
+     * @apiVersion 0.1.0
+     *
+     * @apiParam (Path) {String} id Card unique id
+     * @apiParam (Path) {String} authorization Merchant authorization
+     *
+     * @apiParam (QueryString) {String} api_token User token
+     *
+     * @apiParam (Body) {Number} amount Block amount
+     * @apiParam (Body) {String} [description] Load description
+     *
+     * @apiSuccess {Boolean} success Captured
+     * @apiSuccess {Object} data Data
+     *
+     * @param Request $request Request
+     * @param integer $id Card id
+     * @param string $authorization Merchant Authorization
+     * @return mixed Response
+     */
+    public function capture(Request $request, $id, $authorization)
+    {
+        if ($card = $request->user()->getCard($id)) {
+            // Check if authorization code exists
+            if (!$merchantAuthorization = MerchantAuthorization::getById($authorization)) {
+                return $this->response->error(self::AUTHORIZATION_NOT_FOUND);
+            }
+
+            // validate
+            // read more on validation at http://laravel.com/docs/validation
+            $rules = array(
+                'amount' => 'required|numeric|min:0.01|max:' . $merchantAuthorization->getRemainingAmount(),
+                'description' => 'max:255'
+            );
+
+            // validates request
+            try {
+                $this->validate($request, $rules);
+            } catch (ValidationException $e) {
+                $errors = $e->getResponse()->getData();
+                return $this->response->error(self::UNABLE_TO_CAPTURE_AMOUNT, $errors);
+            }
+
+            $data = [
+                'amount' => $request->get('amount'),
+                'description' => $request->get('description'),
+                'authorization_id' => $authorization
+            ];
+
+            $transaction = MerchantCapturedTransaction::create($data);
+            if ($transaction->save()) {
+                $data = [
+                    'transaction_id' => (string) $transaction->id
+                ];
+
+                return $this->response->success($data);
+            }
+
+            return $this->response->error(self::UNABLE_TO_CAPTURE_AMOUNT);
         }
 
         return $this->response->error(self::CARD_NOT_FOUND);

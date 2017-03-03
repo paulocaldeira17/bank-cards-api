@@ -86,6 +86,7 @@ class Card extends Base
 
     /**
      * Returns card transactions
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function transactions()
     {
@@ -94,6 +95,7 @@ class Card extends Base
 
     /**
      * Returns card merchants authorizations (blocked amount)
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function merchantAuthorizations()
     {

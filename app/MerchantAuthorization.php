@@ -12,6 +12,7 @@ use Webpatser\Uuid\Uuid;
  * @property string merchant_id
  * @property string transaction_id
  * @property string state
+ * @property MerchantCapturedTransaction[] captures
  *
  * @package App
  */
@@ -22,6 +23,20 @@ class MerchantAuthorization extends Base
      */
     const STATE_OPENED = 'opened';
     const STATE_CLOSED = 'closed';
+
+    /**
+     * Returns resource by id
+     * @param $id Resource id
+     * @return mixed Resource
+     */
+    public static function getById($id)
+    {
+        if ($query = parent::getById($id)) {
+            return $query->first();
+        }
+
+        return null;
+    }
 
     /**
      * Creates a new merchant authorization
@@ -48,5 +63,21 @@ class MerchantAuthorization extends Base
         $authorization->state = self::STATE_OPENED;
 
         return $authorization;
+    }
+
+    /**
+     * Merchant captures
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function captures() {
+        return $this->hasMany('App\MerchantCapturedTransaction', 'authorization_id');
+    }
+
+    /**
+     * Returns remaining amount
+     * @return Remaining Amount
+     */
+    public function getRemainingAmount() {
+        return $this->amount - $this->captures->sum('amount');
     }
 }

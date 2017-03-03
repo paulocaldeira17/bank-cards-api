@@ -5,6 +5,7 @@ use App\MerchantAuthorization;
 
 /**
  * Class Blocked Card Transaction Model
+ * @property string authorization_id
  * @package App
  */
 class BlockedCardTransaction extends CardTransaction
@@ -38,8 +39,10 @@ class BlockedCardTransaction extends CardTransaction
             'description' => $this->description,
             'amount' => abs($this->amount)
         ];
-        MerchantAuthorization::create($data)->save();
+
+        $authorization = MerchantAuthorization::create($data);
+        $authorization->save();
+
+        $this->authorization_id = $authorization->id;
     }
-
-
 }
