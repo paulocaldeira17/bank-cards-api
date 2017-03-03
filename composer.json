@@ -28,6 +28,8 @@
     },
     "scripts": {
         "post-install-cmd": [
+            "pwd",
+            "ls -la",
             "touch ../database/database.sqlite"
         ]
     },
