@@ -28,8 +28,7 @@
     },
     "scripts": {
         "post-install-cmd": [
-            "touch database/database.sqlite",
-            "php -S localhost:8000 -t public"
+            "touch database/database.sqlite"
         ]
     },
     "minimum-stability": "dev",
