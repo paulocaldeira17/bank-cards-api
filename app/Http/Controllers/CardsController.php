@@ -32,6 +32,8 @@ class CardsController extends Controller
     const AUTHORIZATION_NOT_FOUND = 'AuthorizationNotFound';
     const UNABLE_TO_CAPTURE_AMOUNT = 'UnableToCaptureAmount';
     const UNABLE_TO_AUTHORIZE_REQUEST = 'UnableToAuthorizeRequest';
+    const UNABLE_TO_REFUND_AMOUNT = 'UnableToRefundAmount';
+    const AUTHORIZATION_ALREADY_REFUNDED = 'AuthorizationAlreadyRefunded';
 
     /**
      * @api {get} /cards?api_token=[user-token] Get all cards
@@ -445,6 +447,8 @@ class CardsController extends Controller
             // Check if authorization code exists
             if (!$merchantAuthorization = MerchantAuthorization::getById($authorization)) {
                 return $this->response->error(self::AUTHORIZATION_NOT_FOUND);
+            } else if ($merchantAuthorization->isClosed()) {
+                return $this->response->error(self::AUTHORIZATION_ALREADY_REFUNDED);
             }
 
             // validate
@@ -478,6 +482,72 @@ class CardsController extends Controller
             }
 
             return $this->response->error(self::UNABLE_TO_CAPTURE_AMOUNT);
+        }
+
+        return $this->response->error(self::CARD_NOT_FOUND);
+    }
+
+    /**
+     * @api {get} /cards/:id/refund/:authorization?api_token=[user-token] Merchant refund
+     * @apiName MerchantRefundCard
+     * @apiGroup Cards
+     * @apiVersion 0.1.0
+     *
+     * @apiParam (Path) {String} id Card unique id
+     * @apiParam (Path) {String} authorization Merchant Authorization
+     *
+     * @apiParam (QueryString) {String} api_token User token
+     *
+     * @apiParam (Body) {Number} amount Refund amount
+     * @apiParam (Body) {String} [description] Load description
+     *
+     * @apiSuccess {Boolean} success Refunded
+     * @apiSuccess {Object} data Data
+     * @apiSuccess {Boolean} data.refundedAmount Refunded amount
+     *
+     * @param Request $request Request
+     * @param integer $id Card id
+     * @param string $authorization Merchant Authorization
+     * @return mixed Response
+     */
+    public function refund(Request $request, $id, $authorization)
+    {
+        if ($card = $request->user()->getCard($id)) {
+            // Check if authorization code exists
+            if (!$merchantAuthorization = MerchantAuthorization::getById($authorization)) {
+                return $this->response->error(self::AUTHORIZATION_NOT_FOUND);
+            } else if ($merchantAuthorization->isClosed()) {
+                return $this->response->error(self::AUTHORIZATION_ALREADY_REFUNDED);
+            }
+
+            // validate
+            // read more on validation at http://laravel.com/docs/validation
+            $rules = array(
+                'description' => 'max:255'
+            );
+
+            // validates request
+            try {
+                $this->validate($request, $rules);
+            } catch (ValidationException $e) {
+                $errors = $e->getResponse()->getData();
+                return $this->response->error(self::UNABLE_TO_REFUND_AMOUNT, $errors);
+            }
+
+            $amount = $merchantAuthorization->getRemainingAmount();
+            $transaction = CardTransactionFactory::createTransaction($amount, CardTransaction::TYPE_REFUND);
+            $transaction->description = $request->get('description');
+            $transaction->authorization_id =$authorization;
+
+            if ($card->makeTransaction($transaction)) {
+                $data = [
+                    'refundedAmount' => $transaction->amount
+                ];
+
+                return $this->response->success($data);
+            }
+
+            return $this->response->error(self::UNABLE_TO_REFUND_AMOUNT);
         }
 
         return $this->response->error(self::CARD_NOT_FOUND);

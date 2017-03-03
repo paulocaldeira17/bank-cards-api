@@ -39,6 +39,6 @@ $app->group(['prefix' => 'api/v1'], function () use ($app) {
          */
         $app->post('/cards/{id}/authorization', 'CardsController@authorizationRequest');
         $app->post('/cards/{id}/capture/{authorization}', 'CardsController@capture');
-        $app->post('/cards/{id}/refund/{authorization}', 'CardsController@refund');
+        $app->get('/cards/{id}/refund/{authorization}', 'CardsController@refund');
     });
 });

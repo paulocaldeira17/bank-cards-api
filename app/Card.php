@@ -99,7 +99,7 @@ class Card extends Base
      */
     public function merchantAuthorizations()
     {
-        return $this->hasMany('App\MerchantAuthorization');
+        return $this->hasMany('App\MerchantAuthorization')->opened();
     }
 
     /**

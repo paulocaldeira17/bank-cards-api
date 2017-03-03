@@ -39,6 +39,44 @@ class MerchantAuthorization extends Base
     }
 
     /**
+     * Scope a query to only opened authorizations
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOpened($query)
+    {
+        return $query->where('state', '=', self::STATE_OPENED);
+    }
+
+    /**
+     * Scope a query to only closed authorizations
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeClosed($query)
+    {
+        return $query->where('state', '=', self::STATE_CLOSED);
+    }
+
+    /**
+     * Returns true if it is opened
+     * @return bool Opened
+     */
+    public function isOpened() {
+        return $this->state == self::STATE_OPENED;
+    }
+
+    /**
+     * Returns true if it is closed
+     * @return bool Closed
+     */
+    public function isClosed() {
+        return $this->state == self::STATE_CLOSED;
+    }
+
+    /**
      * Creates a new merchant authorization
      * @param $data Data
      * @return MerchantAuthorization
