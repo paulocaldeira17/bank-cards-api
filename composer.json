@@ -27,8 +27,11 @@
         ]
     },
     "scripts": {
+        "post-root-package-install": [
+            "php -r \"copy('.env.example', '.env');\""
+        ],
         "post-install-cmd": [
-            "touch ./database/database.sqlite"
+            "touch database/database.sqlite\""
         ]
     },
     "minimum-stability": "dev",

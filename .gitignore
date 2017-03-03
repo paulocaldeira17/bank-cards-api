@@ -2,9 +2,13 @@
 /.idea
 Homestead.json
 Homestead.yaml
+.env
 
 ## SQLite Database
 database/database.sqlite
 
 ## Node Modules
 node_modules/
+
+## API Documentation
+public/documentation/
