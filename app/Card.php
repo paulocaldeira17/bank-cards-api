@@ -102,6 +102,6 @@ class Card extends Base
         }
 
         $transaction->card_id = $this->id;
-        $transaction->save();
+        return $transaction->save();
     }
 }

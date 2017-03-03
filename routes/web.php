@@ -32,5 +32,6 @@ $app->group(['prefix' => 'api/v1'], function () use ($app) {
         $app->delete('/cards/{id}', 'CardsController@destroy');
         $app->get('/cards/{id}/balance', 'CardsController@balance');
         $app->get('/cards/{id}/transactions', 'CardsController@transactions');
+        $app->post('/cards/{id}/deposit', 'CardsController@deposit');
     });
 });

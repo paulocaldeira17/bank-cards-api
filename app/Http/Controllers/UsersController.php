@@ -20,7 +20,7 @@ class UsersController extends Controller
     /**
      * Errors
      */
-    const UNABLE_TO_CREATE_USER = 'UnableCreateUser';
+    const UNABLE_TO_CREATE_USER = 'UnableToCreateUser';
     const USER_NOT_FOUND = 'UserNotFound';
 
     /**
@@ -29,12 +29,9 @@ class UsersController extends Controller
      * @apiGroup Users
      * @apiVersion 0.1.0
      *
-     * @apiParam {Integer} [limit=10] Limit
-     * @apiParam {Integer} [skip=0] Skip (offset)
-     *
      * @apiSuccess {Boolean} success Success
-     * @apiSuccess {String} data Details
-     * @apiSuccess {String} data.items Users
+     * @apiSuccess {Object} data Data
+     * @apiSuccess {Array} data.items Users
      */
     public function index()
     {
@@ -48,11 +45,11 @@ class UsersController extends Controller
      * @apiGroup Users
      * @apiVersion 0.1.0
      *
-     * @apiParam {String} name User name
-     * @apiParam {String} email User email
+     * @apiParam (Body) {String} name User name
+     * @apiParam (Body) {String} email User email
      *
      * @apiSuccess {Boolean} success Created
-     * @apiSuccess {String} data Details
+     * @apiSuccess {Object} data Data
      * @apiSuccess {String} data.id User id
      * @apiSuccess {String} data.more Path to access user information
      *
@@ -102,10 +99,10 @@ class UsersController extends Controller
      * @apiGroup Users
      * @apiVersion 0.1.0
      *
-     * @apiParam {Number} id User unique id
+     * @apiParam (Path) {Number} id User unique id
      *
      * @apiSuccess {Boolean} success Success
-     * @apiSuccess {String} data User details
+     * @apiSuccess {Object} data User details
      *
      * @param integer $id User id
      * @return mixed User
@@ -120,15 +117,15 @@ class UsersController extends Controller
     }
 
     /**
-     * @api {get} /users/:id/token Generates token
+     * @api {get} /users/:id/token Generate token
      * @apiName GenerateTokenUser
      * @apiGroup Users
      * @apiVersion 0.1.0
      *
-     * @apiParam {Number} id User unique id
+     * @apiParam (Path) {Number} id User unique id
      *
      * @apiSuccess {Boolean} success Success
-     * @apiSuccess {String} data User details
+     * @apiSuccess {Object} data Data
      * @apiSuccess {String} data.token User details
      *
      * @param integer $id User id

@@ -21,8 +21,10 @@ class CardsController extends Controller
     /**
      * Errors
      */
-    const UNABLE_TO_CREATE_CARD = 'UnableCreateCard';
+    const UNABLE_TO_CREATE_CARD = 'UnableToCreateCard';
     const CARD_NOT_FOUND = 'CardNotFound';
+    const UNAUTHORIZED = 'Unauthorized';
+    const UNABLE_TO_FINISH_TRANSACTION = 'UnableFinishToTransaction';
 
     /**
      * @api {get} /cards Get all cards
@@ -31,8 +33,8 @@ class CardsController extends Controller
      * @apiVersion 0.1.0
      *
      * @apiSuccess {Boolean} success Success
-     * @apiSuccess {String} data Details
-     * @apiSuccess {String} data.items Cards
+     * @apiSuccess {Object} data Data
+     * @apiSuccess {Array} data.items Cards
      *
      * @param Request $request Request
      * @return string Response
@@ -49,14 +51,14 @@ class CardsController extends Controller
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam {String} accountName Account name
-     * @apiParam {String} iban IBAN
-     * @apiParam {String} bic BIC
-     * @apiParam {Double} [balance] Balance
-     * @apiParam {String} [currencyCode=GBP] Currency Code
+     * @apiParam (Body) {String} accountName Account name
+     * @apiParam (Body) {String} iban IBAN
+     * @apiParam (Body) {String} bic BIC
+     * @apiParam (Body) {Double} [balance] Balance
+     * @apiParam (Body) {String} [currencyCode=GBP] Currency Code
      *
      * @apiSuccess {Boolean} success Created
-     * @apiSuccess {String} data Details
+     * @apiSuccess {Object} data Data
      * @apiSuccess {String} data.id Card id
      * @apiSuccess {String} data.more Path to access card information
      *
@@ -95,7 +97,8 @@ class CardsController extends Controller
         if ($card->save()) {
             // Deposit if balance is passed
             if ($balance = $request->get('balance')) {
-                $transaction = CardTransactionFactory::createTransaction($balance);
+                $transaction = CardTransactionFactory::createTransactionByAmount($balance);
+                $transaction->description = 'Initial deposit';
                 $card->makeTransaction($transaction);
             }
 
@@ -116,7 +119,7 @@ class CardsController extends Controller
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam {Number} id Card unique id
+     * @apiParam (Path) {Number} id Card unique id
      *
      * @apiSuccess {Boolean} success Success
      * @apiSuccess {String} data Card details
@@ -140,15 +143,15 @@ class CardsController extends Controller
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam {Number} id Card unique id
+     * @apiParam (Path) {Number} id Card unique id
      *
-     * @apiParam {String} [accountName] Account name
-     * @apiParam {String} [iban] IBAN
-     * @apiParam {String} [bic] BIC
-     * @apiParam {String} [currencyCode=GBP] Currency Code
+     * @apiParam (Body) {String} [accountName] Account name
+     * @apiParam (Body) {String} [iban] IBAN
+     * @apiParam (Body) {String} [bic] BIC
+     * @apiParam (Body) {String} [currencyCode=GBP] Currency Code
      *
      * @apiSuccess {Boolean} success Updated
-     * @apiSuccess {String} data Details
+     * @apiSuccess {Object} data Data
      * @apiSuccess {String} data.id Card id
      * @apiSuccess {String} data.more Path to access card information
      *
@@ -200,7 +203,7 @@ class CardsController extends Controller
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam {Number} id Card unique id
+     * @apiParam (Path) {Number} id Card unique id
      *
      * @apiSuccess {Boolean} success Deleted
      *
@@ -226,9 +229,10 @@ class CardsController extends Controller
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam {Number} id Card unique id
+     * @apiParam (Path) {Number} id Card unique id
      *
      * @apiSuccess {Boolean} success Deleted
+     * @apiSuccess {Object} data Data
      * @apiSuccess {Boolean} data.authorizedBalance Authorized Balance
      * @apiSuccess {Boolean} data.balance Deleted Balance
      *
@@ -252,13 +256,14 @@ class CardsController extends Controller
 
     /**
      * @api {get} /cards/:id/transactions Card transactions
-     * @apiName DeleteCard
+     * @apiName TransactionsCard
      * @apiGroup Cards
      * @apiVersion 0.1.0
      *
-     * @apiParam {Number} id Card unique id
+     * @apiParam (Path) {Number} id Card unique id
      *
-     * @apiSuccess {Boolean} success Deleted
+     * @apiSuccess {Boolean} success Success
+     * @apiSuccess {Object} data Data
      * @apiSuccess {Boolean} data.items Transactions
      *
      * @param Request $request Request
@@ -267,7 +272,63 @@ class CardsController extends Controller
      */
     public function transactions(Request $request, $id)
     {
-        $transactions = $request->user()->getCard($id)->transactions;
-        return $this->response->pagination($transactions);
+        if ($card = $request->user()->getCard($id)) {
+
+            if ($transactions = $card->transactions) {
+                return $this->response->pagination($transactions);
+            }
+        }
+
+        return $this->response->error(self::CARD_NOT_FOUND);
+    }
+
+    /**
+     * @api {get} /cards/:id/deposit Load/Deposit
+     * @apiName DepositCard
+     * @apiGroup Cards
+     * @apiVersion 0.1.0
+     *
+     * @apiParam (Path) {Number} id Card unique id
+     *
+     * @apiParam (Body) {Number} amount Load/Deposit amount
+     * @apiParam (Body) {String} [description] Load description
+     *
+     * @apiSuccess {Boolean} success Success
+     *
+     * @param Request $request Request
+     * @param integer $id Card id
+     * @return mixed Response
+     */
+    public function deposit(Request $request, $id)
+    {
+        if ($card = $request->user()->getCard($id)) {
+            $amount = $request->get('amount');
+
+            // validate
+            // read more on validation at http://laravel.com/docs/validation
+            $rules = array(
+                'amount' => 'required|numeric|min:0.01',
+                'description' => 'max:255'
+            );
+
+            // validates request
+            try {
+                $this->validate($request, $rules);
+            } catch (ValidationException $e) {
+                $errors = $e->getResponse()->getData();
+                return $this->response->error(self::UNABLE_TO_FINISH_TRANSACTION, $errors);
+            }
+
+            $transaction = CardTransactionFactory::createTransactionByAmount($amount);
+            $transaction->description = $request->get('description');
+
+            if ($card->makeTransaction($transaction)) {
+                return $this->response->success();
+            }
+
+            return $this->response->error(self::UNABLE_TO_FINISH_TRANSACTION);
+        }
+
+        return $this->response->error(self::CARD_NOT_FOUND);
     }
 }

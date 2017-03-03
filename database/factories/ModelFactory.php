@@ -35,6 +35,7 @@ $factory->define(App\CardTransaction::class, function (Faker\Generator $faker) {
     return [
         'id' => $faker->uuid,
         'amount' => $faker->randomFloat(2, 1, 20),
+        'description' => 'Deposit',
         'card_id' => \App\Card::first()->id,
         'type' => $faker->randomElement([\App\CardTransaction::TYPE_DEPOSIT])
     ];

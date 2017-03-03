@@ -18,6 +18,7 @@ class CreateCardsTransactionsTable extends Migration
             $table->uuid('id');
             $table->primary('id');
             $table->decimal('amount', 10, 2);
+            $table->text('description')->nullable();
 
             // Card
             $table->uuid('card_id');

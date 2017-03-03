@@ -1,6 +1,7 @@
 <?php
 
 namespace App;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class Card Transaction Model
@@ -8,6 +9,7 @@ namespace App;
  * @property double amount
  * @property string card_id
  * @property string type
+ * @property string description
  *
  * @package App
  */
@@ -33,5 +35,46 @@ class CardTransaction extends Base
     public function card()
     {
         return $this->belongsTo('App\Card');
+    }
+
+    /**
+     * Save the model to the database.
+     *
+     * @param  array  $options
+     * @return bool
+     */
+    public function save(array $options = [])
+    {
+        return DB::transaction(function() use ($options) {
+            $this->beforeSave();
+            $result = parent::save($options);
+            $this->afterSave();
+
+            return $result;
+        });
+    }
+
+    /**
+     * Before save transactions
+     */
+    public function beforeSave()
+    {
+        $this->normalizeAmount();
+    }
+
+    /**
+     * After save transactions
+     */
+    public function afterSave()
+    {
+        //
+    }
+
+    /**
+     * Normalizes amount
+     */
+    protected function normalizeAmount()
+    {
+        $this->amount = abs($this->amount);
     }
 }
