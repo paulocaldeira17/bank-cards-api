@@ -14,7 +14,7 @@ You can use Heroku deployed version [http://bank-cards-api.herokuapp.com/](http:
 * [npm](https://docs.npmjs.com/getting-started/installing-node)
 * [gulp](https://github.com/gulpjs/gulp/blob/master/docs/getting-started.md)
 
-### Installation
+### Local Installation
 
 After install requirements run these commands on your console.
 
@@ -28,15 +28,15 @@ After install requirements run these commands on your console.
 
 ### API Documentation
 
-To access api documentation you just need to access to `http://localhost:8000/documentation/v1/`. 
+To access api documentation you just need to access to `http://bank-cards-api.herokuapp.com/documentation/v1/`. 
 **Note:** Last slash must be placed or it won't work.
 
 ### Authorization 
 
-1. [Create a user](http://localhost:8000/documentation/v1/#api-Users-StoreUser).
-2. [Request/Generate a user `api_token`](http://localhost:8000/documentation/v1/#api-Users-GenerateTokenUser).
+1. [Create a user](http://bank-cards-api.herokuapp.com/documentation/v1/#api-Users-StoreUser).
+2. [Request/Generate a user `api_token`](http://bank-cards-api.herokuapp.com/documentation/v1/#api-Users-GenerateTokenUser).
 
-Please check [API Documentation](#API-Documentation) to see how to make these requests.
+Please check [API Documentation](#api-documentation) to see how to make these requests.
 
 ### Database
 
