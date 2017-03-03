@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Card;
+use App\CardTransaction;
 use App\CardTransactionFactory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -320,6 +321,58 @@ class CardsController extends Controller
             }
 
             $transaction = CardTransactionFactory::createTransactionByAmount($amount);
+            $transaction->description = $request->get('description');
+
+            if ($card->makeTransaction($transaction)) {
+                return $this->response->success();
+            }
+
+            return $this->response->error(self::UNABLE_TO_FINISH_TRANSACTION);
+        }
+
+        return $this->response->error(self::CARD_NOT_FOUND);
+    }
+
+    /**
+     * @api {post} /cards/:id/authorization Merchant authorization
+     * @apiName MerchantAuthorizationCard
+     * @apiGroup Cards
+     * @apiVersion 0.1.0
+     *
+     * @apiParam (Path) {Number} id Card unique id
+     *
+     * @apiParam (Body) {Number} amount Block amount
+     * @apiParam (Body) {String} [description] Load description
+     *
+     * @apiSuccess {Boolean} success Blocked
+     * @apiSuccess {Object} data Data
+     * @apiSuccess {Boolean} data.authorization Authorization id
+     *
+     * @param Request $request Request
+     * @param integer $id Card id
+     * @return mixed Response
+     */
+    public function authorizationRequest(Request $request, $id)
+    {
+        if ($card = $request->user()->getCard($id)) {
+            $amount = $request->get('amount');
+
+            // validate
+            // read more on validation at http://laravel.com/docs/validation
+            $rules = array(
+                'amount' => 'required|numeric|min:0.01|max:' . $card->getAuthorizedBalance(),
+                'description' => 'max:255'
+            );
+
+            // validates request
+            try {
+                $this->validate($request, $rules);
+            } catch (ValidationException $e) {
+                $errors = $e->getResponse()->getData();
+                return $this->response->error(self::UNABLE_TO_FINISH_TRANSACTION, $errors);
+            }
+
+            $transaction = CardTransactionFactory::createTransaction($amount, CardTransaction::TYPE_BLOCKED);
             $transaction->description = $request->get('description');
 
             if ($card->makeTransaction($transaction)) {

@@ -57,7 +57,7 @@ class CardTransaction extends Base
     /**
      * Before save transactions
      */
-    public function beforeSave()
+    protected function beforeSave()
     {
         $this->normalizeAmount();
     }
@@ -65,7 +65,7 @@ class CardTransaction extends Base
     /**
      * After save transactions
      */
-    public function afterSave()
+    protected function afterSave()
     {
         //
     }

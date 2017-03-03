@@ -120,8 +120,8 @@ class User extends Base implements AuthenticatableContract, AuthorizableContract
     public function getCards() {
         if ($cards = $this->cards) {
             return $cards->map(function (Card $c) {
-                $c->authorizedBalance = $c->transactions->sum('amount');
-                $c->balance = $c->transactions->sum('amount');
+                $c->authorizedBalance = $c->getAuthorizedBalance();
+                $c->balance = $c->getBalance();
                 return $c;
             });
         }
@@ -136,8 +136,8 @@ class User extends Base implements AuthenticatableContract, AuthorizableContract
      */
     public function getCard($id) {
         if ($card = $this->cards()->where('id', $id)->first()) {
-            $card->authorizedBalance = $card->transactions->sum('amount');
-            $card->balance = $card->transactions->sum('amount');
+            $card->authorizedBalance = $card->getAuthorizedBalance();
+            $card->balance = $card->getBalance();
 
             return $card;
         }

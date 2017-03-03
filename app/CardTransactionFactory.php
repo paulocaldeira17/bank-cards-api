@@ -7,7 +7,7 @@ use Webpatser\Uuid\Uuid;
  * Class Card Transaction Factory
  * @package App
  */
-class CardTransactionFactory extends Base
+class CardTransactionFactory
 {
     /**
      * Returns a Card Transaction depending on amount
@@ -25,24 +25,12 @@ class CardTransactionFactory extends Base
     }
 
     /**
-     * Returns a Card Transaction depending on amount
-     * @param $amount Amount
-     * @return CardTransaction Transaction
-     */
-    public static function createBlockedTransaction($amount)
-    {
-        $transaction = self::createTransaction(-abs($amount), CardTransaction::TYPE_BLOCKED);
-
-        return $transaction;
-    }
-
-    /**
      * Creates a transaction
      * @param $amount Amount
      * @param string $type Transactions type
      * @return CardTransaction Card transactions
      */
-    private static function createTransaction($amount, $type = CardTransaction::TYPE_DEPOSIT)
+    public static function createTransaction($amount, $type = CardTransaction::TYPE_DEPOSIT)
     {
         if (!isset($amount) || empty($type)) {
             return null;

@@ -12,6 +12,7 @@ use Webpatser\Uuid\Uuid;
  * @property string bic
  * @property string user_id
  * @property CardTransaction[] transactions
+ * @property MerchantAuthorization[] merchantAuthorizations
  *
  * @package App
  */
@@ -89,6 +90,40 @@ class Card extends Base
     public function transactions()
     {
         return $this->hasMany('App\CardTransaction');
+    }
+
+    /**
+     * Returns card merchants authorizations (blocked amount)
+     */
+    public function merchantAuthorizations()
+    {
+        return $this->hasMany('App\MerchantAuthorization');
+    }
+
+    /**
+     * Returns authorized balance
+     * @return double Authorized balance
+     */
+    public function getAuthorizedBalance()
+    {
+        if (!isset($this->authorizationBalance)) {
+            $this->authorizationBalance = $this->transactions->sum('amount');
+        }
+
+        return  $this->authorizationBalance;
+    }
+
+    /**
+     * Returns balance
+     * @return double Balance
+     */
+    public function getBalance()
+    {
+        if (!isset($this->balance)) {
+            $this->balance = $this->merchantAuthorizations->sum('amount');
+        }
+
+        return $this->balance + $this->getAuthorizedBalance();
     }
 
     /**
