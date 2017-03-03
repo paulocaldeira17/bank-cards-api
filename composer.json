@@ -28,9 +28,7 @@
     },
     "scripts": {
         "post-install-cmd": [
-            "pwd",
-            "ls -la",
-            "touch ../database/database.sqlite"
+            "touch ./database/database.sqlite"
         ]
     },
     "minimum-stability": "dev",
