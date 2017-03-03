@@ -12,7 +12,7 @@
 */
 
 $app->get('/', function () use ($app) {
-    return redirect('documentation/v1\/');
+    return response()->make('Loading...', 301)->header('Location', '/documentation/v1/');
 });
 
 $app->group(['prefix' => 'api/v1'], function () use ($app) {
